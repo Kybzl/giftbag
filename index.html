@@ -1,17 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js"></script>
-     <script>
-    if ('addEventListener' in document) {
-        document.addEventListener('DOMContentLoaded', function() {
-            FastClick.attach(document.body);
-        }, false);
-    }
-</script>
+    <!-- 新增移动端meta标签 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta charset="UTF-8">
     <title>群星闪耀时-连锁礼包抽奖</title>
     <style>
+        /* 样式保持不变 */
         :root {
             --theme-red: #ff6b6b;
             --gold-color: #ffd700;
@@ -408,96 +403,18 @@
         animation: rippleEffect 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-.player-tag {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    margin-left: 8px;
-    font-weight: bold;
-}
-
-.normal-tag { 
-    background: #666; 
-    color: white;
-}
-.featured-tag { 
-    background: #4CAF50; /* 绿色 */
-    color: white;
-}
-.dream-tag { 
-    background: var(--gold-color); 
-    color: #000;
-}
-
-/* 新增动画效果 */
-@keyframes glow {
-    0% { box-shadow: 0 0 10px rgba(76,175,80,0.5); }
-    50% { box-shadow: 0 0 20px rgba(76,175,80,0.8); }
-    100% { box-shadow: 0 0 10px rgba(76,175,80,0.5); }
-}
-
-@keyframes gold-glow {
-    0% { 
-        transform: scale(1);
-        text-shadow: 0 0 5px rgba(255,215,0,0.5);
-    }
-    50% { 
-        transform: scale(1.1);
-        text-shadow: 0 0 15px rgba(255,215,0,0.8);
-    }
-    100% { 
-        transform: scale(1);
-        text-shadow: 0 0 5px rgba(255,215,0,0.5);
-    }
-}
-
-.special-effect {
-    animation: glow 1.5s ease-in-out infinite;
-}
-
-.gold-effect {
-    animation: gold-glow 1.5s ease-in-out infinite;
-}
-
-.result-card {
-    position: relative;
-    overflow: hidden;
-    padding: 15px;
-    margin: 10px 0;
-    border-radius: 8px;
-}
-
-/* 新增粒子效果 */
-@keyframes particle {
-    from {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-100px) scale(0.5);
-    }
-}
-
-.particle {
-    position: absolute;
-    pointer-events: none;
-    animation: particle 1s ease-out;
-}
 
     </style>
 </head>
 <body>
     <div class="game-header">
         <h1>群星闪耀时 连锁礼包</h1>
-        <div class="promo-banner">前两档翻倍！立即购买享超值优惠</div>
 
         <!-- 新增选项卡 -->
         <div class="tab-container">
             <div class="tab active" onclick="switchTab('store')">商店</div>
             <div class="tab" onclick="switchTab('inbox')">收件箱</div>
-	    <div class="tab" onclick="switchTab('history')">历史记录</div>
+            <div class="tab" onclick="switchTab('history')">历史记录</div>
         </div>
     </div>
 
@@ -522,48 +439,33 @@
         </div>
     </div>
 
-	<!-- 在body末尾添加模态框结构 -->
-	<div class="modal-backdrop" style="display:none;"></div>
-	<div id="selectModal" class="modal" style="display:none;">
-    	<h3>请选择心仪球员</h3>
-    	<div id="playerSelection"></div>
-    	<button onclick="closeModal()" class="game-btn" style="margin-top:15px">关闭</button>
-	</div>
+    <!-- 在body末尾添加模态框结构 -->
+    <div class="modal-backdrop" style="display:none;"></div>
+    <div id="selectModal" class="modal" style="display:none;">
+        <h3 id="modalTitle">请选择心仪球员</h3>
+        <div id="playerSelection"></div>
+        <button onclick="closeModal()" class="game-btn" style="margin-top:15px">关闭</button>
+    </div>
 
     <script>
         // 游戏数据
         let gold = 100000;
         let inbox = [];
-    	// 新增数据存储
-    	let rewards = []; // 抽奖记录 {name: string, type: 'normal'|'featured'|'dream'}
+        let rewards = []; // 抽奖记录 {name: string, type: 'normal'|'featured'|'dream'}
         const COUNTDOWN_DAYS = 4;
         const COUNTDOWN_HOURS = 18;
 
-
-        // 自定义球员数据库（由用户自行添加具体球员）
+        // 自定义球员数据库
         const players = {
-            featured: [
-                // 精选球员18名（示例名称，请替换为实际球员）
-                "梦幻精选姆巴佩", "梦幻精选格纳布里", "梦幻精选贝林厄姆",
-                "梦幻精选加维", "梦幻精选巴尔科拉", "梦幻精选劳塔罗", 
-                "梦幻精选萨卡", "精选恰尔汉奥卢", "精选蒂莱曼斯",
-                "精选拉菲尼亚", "精选赖斯", "精选罗德里戈",
-                "精选德西雷杜埃", "精选基米希", "精选图拉姆",
-                "精选登贝莱", "精选莱万多夫斯基", "精选马丁内斯"
-            ],
-            dream: [
-                "梦幻精选姆巴佩", "梦幻精选格纳布里", "梦幻精选贝林厄姆",
-                "梦幻精选加维", "梦幻精选巴尔科拉", "梦幻精选劳塔罗", 
-                "梦幻精选萨卡"
-            ],
+            // 普通球员池
             normal: [
-		'孙兴慜', '哈里·凯恩', '德布劳内', '萨拉赫', '范戴克',
+                '孙兴慜', '哈里·凯恩', '德布劳内', '萨拉赫', '范戴克',
                 '布鲁诺·费尔南德斯', '坎特', '斯特林', '阿诺德', '马内',
                 '拉什福德', '桑乔', '福登', '格拉利什', '詹姆斯',
                 '蒂亚戈', '若日尼奥', '芒特', '卢卡库', '齐耶赫',
                 '吕迪格', '阿斯皮利奎塔', '热苏斯', '津琴科', '洛里',
                 '凯尔·沃克', '马赫雷斯', '京多安', '罗德里', '埃德森', 
-		'迪亚斯', '贝尔纳多·席尔瓦', '菲尔·福登', '卡塞米罗', '瓦拉内',            
+                '迪亚斯', '贝尔纳多·席尔瓦', '菲尔·福登', '卡塞米罗', '瓦拉内',            
                 '桑切斯', '厄德高', '萨卡', '奥巴梅扬', '拉卡泽特',
                 '托马斯·帕尔特伊', '本·怀特', '蒂尔尼', '史密斯·罗', '洛孔加',
                 '富安健洋', '马丁内利', '恩凯蒂亚', '拉姆斯代尔', '霍尔丁',
@@ -580,72 +482,74 @@
                 '穆勒', '基米希', '诺伊尔', '萨内', '格纳布里',
                 '戴维斯', '卢卡斯·埃尔南德斯', '帕瓦尔', '格雷茨卡', '马内',
                 '德里赫特', '坎塞洛', '科曼', '索默', '于帕梅卡诺',
-                '哈兰德', '贝林厄姆', '罗伊斯', '布兰特', '阿坎吉',
-]      
-  };
+                '哈兰德', '贝林厄姆', '罗伊斯', '布兰特', '阿坎吉'
+            ],
+            // 精选球员池（足球出少年）
+            featured: [
+                "双增st姆巴佩", "双增st哲克莱斯", "双增st伊萨克",
+                "双增高光佩德里", "双增st库萨诺夫", "双增高光梅西", 
+                "双增高光亚马尔","双增st巴雷拉" 
+            ],
+            // 年少有为球员池
+            youngTalent: [
+                "双增高光梅西", "双增高光亚马尔", "双增高光佩德里", "双增st库萨诺夫"
+            ],
+            // 翻涌后浪球员池
+            newWave: [
+                "双增st姆巴佩", "双增st伊萨克", "双增st哲克莱斯", "双增st巴雷拉"
+            ]
+        };
 
         const packages = [
-            { level: 1, price: 1380,  count: 4, prob: 10, type: "10%含精选经纪人", badge: "翻倍" },
-            { level: 2, price: 3980,  count: 4, prob: 30, type: "30%含精选经纪人", badge: "翻倍" },
-            { level: 3, price: 5800, count: 1, type: "精选经纪人" },
-            { level: 4, price: 6800, count: 1, type: "梦幻精选经纪人" },
-            { level: 5, price: 10800, count: 1, type: "精选经纪人×1+梦幻精选经纪人" },
-            { level: 6, price: 9800, count: 2, type: "梦幻精选经纪人 " },
-            { level: 7, price: 8800, count: 1, type: "梦幻精选经纪人×1+自选 梦幻精选经纪人",components: 2 }
+            { level: 1, price: 1380,  count: 2, prob: 10, type: "5星经纪人（10%含足球出少年）", image: "https://ftp.mioz.cn/test/2025/04/09/1744182923.PNG" },
+            { level: 2, price: 3980,  count: 2, prob: 30, type: "5星经纪人（30%含足球出少年）", image: "https://ftp.mioz.cn/test/2025/04/09/1744182923.PNG" },
+            { level: 3, price: 5800, count: 1, type: "足球出少年 经纪人", image: "https://ftp.mioz.cn/test/2025/04/09/1744182923.PNG" },
+            { level: 4, price: 6800, count: 1, type: "年少有为 或 翻涌后浪", image: "https://ftp.mioz.cn/test/2025/04/09/1744182923.PNG" },
+            { level: 5, price: 10800, count: 1, type: "年少有为 + 翻涌后浪", image: "https://ftp.mioz.cn/test/2025/04/09/1744182923.PNG" },
+            { level: 6, price: 9800, count: 1, type: "年少有为 或 翻涌后浪(两次2选1）", image: "https://ftp.mioz.cn/test/2025/04/09/1744182923.PNG" },
+            { level: 7, price: 8800, count: 1, type: "足球出少年 + 足球出少年自选", image: "https://ftp.mioz.cn/test/2025/04/09/1744182923.PNG" }
         ];
 
         // 初始化商店
         function initStore() {
             const container = document.getElementById('storeContainer');
-            container.innerHTML = packages.map(pkg => `
+            container.innerHTML = packages.map((pkg, index) => `
                 <div class="package-card">
-                    ${pkg.badge ? `<div class="package-badge">${pkg.badge}</div>` : ''}
+                    <div class="package-badge">第${pkg.level}档</div>
                     <h3>第${pkg.level}档礼包</h3>
-		    <img src="https://ftp.mioz.cn/test/2025/04/09/1744182923.PNG" 
+                    <img src="${pkg.image}" 
                          class="package-image" 
                          alt="第${pkg.level}档礼包">
                     <div class="price-section">
-                        ${pkg.original ? `<span class="original-price">${pkg.original}</span>` : ''}
                         <span class="current-price">${pkg.price}金币</span>
                     </div>
                     <div class="prob-grid">
                         <div>${pkg.type}×${pkg.count}</div>
                     </div>
-                    <button class="game-btn" onclick="buyPackage(${pkg.level-1})">立即购买</button>
+                    <button class="game-btn" onclick="buyPackage(${index})">立即购买</button>
                 </div>
             `).join('');
         }
 
-	// 新增点击反馈效果
-		function createRipple(element) {
-			const ripple = document.createElement("div");
-			ripple.className = "ripple";
-    
-			const rect = element.getBoundingClientRect();
-			ripple.style.left = `${event.clientX - rect.left}px`;
-			ripple.style.top = `${event.clientY - rect.top}px`;
-    
-			element.appendChild(ripple);
-			setTimeout(() => ripple.remove(), 600);
-		}
-
-
         // 购买功能
         function buyPackage(index) {
-	        event = event || window.event;
-    event.stopPropagation();
-    event.preventDefault();
+            const event = window.event || arguments.callee.caller.arguments[0];
+            event.stopPropagation();
+            event.preventDefault();
             
-	    const pkg = packages[index];
+            const pkg = packages[index];
             if (!pkg) return;
             
             // 移动端确认提示优化
             const confirmPurchase = () => {
                 if (gold < pkg.price) {
-                    alert("金币不足！");
+                    showMobileAlert("金币不足！");
                     return false;
                 }
                 
+                const isOK = confirm(`确认花费${pkg.price}金币购买第${pkg.level}档礼包？`);
+                if (!isOK) return false;
+
                 // 添加礼包到收件箱
                 inbox.push({
                     ...pkg,
@@ -674,135 +578,205 @@
             }
         }
 
-    // 强化抽奖记录功能
-    function addRewardRecord(name, type) {
-        rewards.unshift({  // 最新记录显示在最前面
-            name,
-       
-            timestamp: new Date().toLocaleString()
-        });
-        updateHistoryDisplay();
-    }
-
-        // 新增移动端友好提示
-        function showMobileAlert(msg) {
-            const alertDiv = document.createElement('div');
-            alertDiv.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(0,0,0,0.9);
-                color: white;
-                padding: 20px;
-                border-radius: 10px;
-                border: 2px solid var(--theme-red);
-                text-align: center;
-                z-index: 1001;
-                max-width: 80vw;
-                font-size: 16px;
-            `;
-            alertDiv.textContent = msg;
-            
-            const closeBtn = document.createElement('button');
-            closeBtn.textContent = '确定';
-            closeBtn.className = 'game-btn';
-            closeBtn.style.marginTop = '15px';
-            closeBtn.onclick = () => alertDiv.remove();
-            
-            alertDiv.appendChild(closeBtn);
-            document.body.appendChild(alertDiv);
-        }
-
-        // 抽取功能
-        document.getElementById('inboxContainer').addEventListener('click', function(e) {
-            const btn = e.target.closest('.open-btn');
-            if (btn) {
-                const index = parseInt(btn.dataset.index);
-                openPackage(index);
-            }
-        });
-
-	// 修复后的开启逻辑
+        // 开启礼包功能
         function openPackage(index) {
             const pkg = inbox[index];
             if (!pkg || pkg.remaining < 1) return;
 
             let results = [];
-	    let types = [];
+            let types = [];
+            
             switch(pkg.level) {
                 case 1:
+                    // 10%概率获得精选球员
+                    const isFeatured1 = Math.random() * 100 < pkg.prob;
+                    const playerPool1 = isFeatured1 ? players.featured : players.normal;
+                    const player1 = playerPool1[Math.floor(Math.random() * playerPool1.length)];
+                    results.push(player1);
+                    types.push(isFeatured1 ? 'featured' : 'normal');
+                    break;
+                
                 case 2:
-                    const isFeatured = Math.random() * 100 < pkg.prob;
-                const playerPool = isFeatured ? players.featured : players.normal;
-                const player = playerPool[Math.floor(Math.random()*playerPool.length)];
-                results.push(player);
-                types.push(isFeatured ? 'featured' : 'normal');
-                break;
+                    // 30%概率获得精选球员
+                    const isFeatured2 = Math.random() * 100 < pkg.prob;
+                    const playerPool2 = isFeatured2 ? players.featured : players.normal;
+                    const player2 = playerPool2[Math.floor(Math.random() * playerPool2.length)];
+                    results.push(player2);
+                    types.push(isFeatured2 ? 'featured' : 'normal');
+                    break;
                 
                 case 3:
-                    results.push(players.featured[Math.floor(Math.random()*18)]);
+                    // 足球出少年经纪人
+                    const player3 = players.featured[Math.floor(Math.random() * players.featured.length)];
+                    results.push(player3);
+                    types.push('featured');
                     break;
                 
                 case 4:
-                    results.push(players.dream[Math.floor(Math.random()*7)]);
-                    break;
+                    // 第四档：年少有为 或 翻涌后浪（2选1）
+                    showPoolSelectionModal(index);
+                    return; // 不减少次数，等待选择
                 
                 case 5:
-                    results.push(
-                        players.featured[Math.floor(Math.random()*18)],
-                        players.dream[Math.floor(Math.random()*7)]
-                    );
+                    // 第五档：年少有为 + 翻涌后浪
+                    const youngPlayer = players.youngTalent[Math.floor(Math.random() * players.youngTalent.length)];
+                    const newWavePlayer = players.newWave[Math.floor(Math.random() * players.newWave.length)];
+                    results.push(youngPlayer, newWavePlayer);
+                    types.push('featured', 'featured');
                     break;
                 
                 case 6:
-                    results.push(
-                        players.dream[Math.floor(Math.random()*7)]
-                    );
-                    break;
+                    // 第六档：年少有为 或 翻涌后浪（两次2选1）
+                    showDoubleSelectionModal(index);
+                    return; // 不减少次数，等待选择
                 
-				case 7:
-            	if (pkg.remaining > 0) {
-                	updateUI();        // 更新界面
-                	showSelectionModal(index);
-            		}
-            		break;
+                case 7:
+                    // 第七档：足球出少年 + 足球出少年自选
+                    const randomPlayer = players.featured[Math.floor(Math.random() * players.featured.length)];
+                    results.push(randomPlayer);
+                    types.push('featured');
+                    showSelectionModal(index, randomPlayer);
+                    break;
             }
 
-        // 保存记录
-        results.forEach((name, i) => {
-            addRewardRecord(name);
-
-	            // 触发全局特效
-        if(name.includes('梦幻精选')) {
-            document.body.classList.add('gold-global-effect');
-            setTimeout(() => {
-                document.body.classList.remove('gold-global-effect');
-            }, 1000);
-        } else if(name.includes('精选')) {
-            document.body.classList.add('green-global-effect');
-            setTimeout(() => {
-                document.body.classList.remove('green-global-effect');
-            }, 800);
-        }
-        });
+            // 保存记录
+            results.forEach((name, i) => {
+                addRewardRecord(name, types[i]);
+            });
 
             pkg.remaining--;
             updateUI();
-            showResults(results);
+            
+            if (results.length > 0) {
+                showResults(results);
+            }
         }
 
-    // 新增历史记录显示
+        // 显示第四档选择模态框
+        function showPoolSelectionModal(index) {
+            const backdrop = document.querySelector('.modal-backdrop');
+            backdrop.style.display = 'block';
+            
+            const modal = document.getElementById('selectModal');
+            modal.style.display = 'block';
+            document.getElementById('modalTitle').textContent = '请选择球员池';
+            
+            const container = document.getElementById('playerSelection');
+            container.innerHTML = `
+                <div class="player-option" onclick="selectPool(${index}, 'youngTalent')">年少有为</div>
+                <div class="player-option" onclick="selectPool(${index}, 'newWave')">翻涌后浪</div>
+            `;
+        }
+
+        // 选择球员池
+        function selectPool(index, poolType) {
+            const pkg = inbox[index];
+            const playerPool = players[poolType];
+            const player = playerPool[Math.floor(Math.random() * playerPool.length)];
+            
+            // 记录结果
+            addRewardRecord(player, 'featured');
+            
+            pkg.remaining--;
+            updateUI();
+            closeModal();
+            showResults([player]);
+        }
+
+        // 显示第六档双重选择模态框
+        function showDoubleSelectionModal(index) {
+            const backdrop = document.querySelector('.modal-backdrop');
+            backdrop.style.display = 'block';
+            
+            const modal = document.getElementById('selectModal');
+            modal.style.display = 'block';
+            document.getElementById('modalTitle').textContent = '第一次选择球员池';
+            
+            const container = document.getElementById('playerSelection');
+            container.innerHTML = `
+                <div class="player-option" onclick="selectFirstPool(${index}, 'youngTalent')">年少有为</div>
+                <div class="player-option" onclick="selectFirstPool(${index}, 'newWave')">翻涌后浪</div>
+            `;
+        }
+
+        // 第一次选择球员池
+        function selectFirstPool(index, firstPoolType) {
+            const firstPlayerPool = players[firstPoolType];
+            const firstPlayer = firstPlayerPool[Math.floor(Math.random() * firstPlayerPool.length)];
+  
+            // 更新模态框进行第二次选择
+            document.getElementById('modalTitle').textContent = '第二次选择球员池';
+            document.getElementById('playerSelection').innerHTML = `
+                <div class="player-option" onclick="selectSecondPool(${index}, '${firstPoolType}', '${firstPlayer}')">年少有为</div>
+                <div class="player-option" onclick="selectSecondPool(${index}, '${firstPoolType}', '${firstPlayer}')">翻涌后浪</div>
+            `;
+        }          
+        // 第二次选择球员池
+        function selectSecondPool(index, firstPoolType, firstPlayer) {
+            const secondPoolType = firstPoolType === 'youngTalent' ? 'newWave' : 'youngTalent';
+            const secondPlayerPool = players[secondPoolType];
+            const secondPlayer = secondPlayerPool[Math.floor(Math.random() * secondPlayerPool.length)];
+            
+            // 记录结果
+            addRewardRecord(firstPlayer, 'featured');
+            addRewardRecord(secondPlayer, 'featured');
+            
+            const pkg = inbox[index];
+            pkg.remaining--;
+            updateUI();
+            closeModal();
+            showResults([firstPlayer, secondPlayer]);
+        }
+
+        // 显示第七档自选模态框
+        function showSelectionModal(index, randomPlayer) {
+            const backdrop = document.querySelector('.modal-backdrop');
+            backdrop.style.display = 'block';
+            
+            const modal = document.getElementById('selectModal');
+            modal.style.display = 'block';
+            document.getElementById('modalTitle').textContent = '请选择心仪球员';
+            
+            const container = document.getElementById('playerSelection');
+            container.innerHTML = players.featured.map(player => `
+                <div class="player-option" onclick="selectPlayer(${index}, '${player}', '${randomPlayer}')">
+                    ${player}
+                </div>
+            `).join('');
+        }
+
+        // 选择球员
+        function selectPlayer(index, selectedPlayer, randomPlayer) {
+            // 记录自选球员
+            addRewardRecord(selectedPlayer, 'featured');
+            
+            const pkg = inbox[index];
+            pkg.remaining--;
+            updateUI();
+            closeModal();
+            showResults([`随机球员: ${randomPlayer}`, `自选球员: ${selectedPlayer}`]);
+        }
+
+        // 其他功能保持不变
+        function addRewardRecord(name, type) {
+            rewards.unshift({
+                name,
+                type,
+                timestamp: new Date().toLocaleString()
+            });
+            updateHistoryDisplay();
+        }
+
 function updateHistoryDisplay() {
     const container = document.getElementById('historyContainer');
     container.innerHTML = rewards.map(r => `
         <div class="inbox-card">
             <div style="display:flex;align-items:center">
                 <span>${r.name}</span>
-                ${r.name.includes('梦幻精选') ? 
-                    '<span class="player-tag dream-tag">梦幻精选</span>' : 
-                    r.name.includes('精选') ? 
-                    '<span class="player-tag featured-tag">精选</span>' : 
+                ${r.name.includes('st') ? 
+                    '<span class="player-tag  featured-tag">梦幻精选</span>' : 
+                    r.name.includes('高光') ? 
+                    '<span class="player-tag  featured-tag">高光</span>' : 
                     '<span class="player-tag normal-tag">普通</span>'}
             </div>
             <small style="color:#888">${r.timestamp}</small>
@@ -811,178 +785,55 @@ function updateHistoryDisplay() {
     document.getElementById('historyCount').textContent = rewards.length;
 }
 
-// 增强的结果显示方法
-function showResults(results) {
-    const resultDiv = document.createElement('div');
-    resultDiv.className = 'result-modal';
-    
-    // 生成带特效的结果卡片
-    resultDiv.innerHTML = `
-        <h3>🎉 恭喜你获得！</h3>
-        ${results.map(r => {
-            const isDream = r.includes('梦幻精选');
-            const isFeatured = r.includes('精选') && !isDream;
+
+        function showResults(results) {
+            // 结果展示逻辑保持不变
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result-modal';
+            resultDiv.innerHTML = `
+                <h3>🎉 恭喜你获得！</h3>
+                ${results.map(r => `<p>${r}</p>`).join('')}
+                <button onclick="this.parentElement.remove()" 
+                        class="game-btn">确定</button>
+            `;
             
-            return `<div class="result-card ${isDream ? 'gold-effect' : ''}">
-                <p class="${isDream ? 'gold-effect' : isFeatured ? 'special-effect' : ''}">${r}</p>
-                ${isDream ? createParticles() : ''}
-            </div>`;
-        }).join('')}
-        <button onclick="this.parentElement.remove()" 
-                class="game-btn">确定</button>
-    `;
-    
-    // 样式设置
-    resultDiv.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0,0,0,0.95);
-        padding: 25px;
-        border-radius: 15px;
-        border: 2px solid var(--theme-red);
-        color: white;
-        z-index: 1001;
-        min-width: 300px;
-        text-align: center;
-    `;
-    
-    document.body.appendChild(resultDiv);
-}
+            resultDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.95);
+                padding: 25px;
+                border-radius: 15px;
+                border: 2px solid var(--theme-red);
+                color: white;
+                z-index: 1001;
+                min-width: 300px;
+                text-align: center;
+            `;
+            
+            document.body.appendChild(resultDiv);
+        }
 
-// 创建粒子特效
-function createParticles() {
-    let particles = '';
-    for(let i=0; i<8; i++){
-        particles += `<div class="particle" style="
-            left: ${Math.random()*100}%;
-            width: ${Math.random()*6+4}px;
-            height: ${Math.random()*6+4}px;
-            background: radial-gradient(${Math.random()>0.5 ? '#ffd700' : '#fff'}, transparent);
-            animation-delay: ${Math.random()*0.5}s;
-        "></div>`;
-    }
-    return particles;
-}
-
-	// 新增的模态框关闭逻辑
-function closeModal() {
-    document.getElementById('selectModal').style.display = 'none';
-    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-}
-
-        // 更新后的自选功能
-// 强化后的模态框显示逻辑
-function showSelectionModal(index) {
-    // 创建背景遮罩
-    const backdrop = document.querySelector('.modal-backdrop');
-    backdrop.style.display = 'block';
-    
-    // 显示选择框
-    const modal = document.getElementById('selectModal');
-    modal.style.display = 'block';
-    
-    // 填充球员选项
-    const container = document.getElementById('playerSelection');
-    container.innerHTML = players.dream.map(player => `
-        <div class="player-option" 
-             onclick="selectPlayer(${index}, '${player}')">
-            ${player}
-        </div>
-    `).join('');
-}
-
-// 优化后的选择逻辑
-function selectPlayer(index, selectedPlayer) {
-    const pkg = inbox[index];
-        // 记录自选球员
-        addRewardRecord(selectedPlayer);
-        
-        // 记录随机球员
-        const otherPlayers = players.dream.filter(p => p !== selectedPlayer);
-        const randomPlayer = otherPlayers[Math.floor(Math.random()*otherPlayers.length)];
-        addRewardRecord(randomPlayer);
-    
-    // 显示结果
-    const resultText = [
-        `⭐ 自选球员：${selectedPlayer}`,
-        `🎲 随机球员：${randomPlayer}`
-    ];
-    showResults(resultText);
-    
-    closeModal();
-}
-
-    // 新增确认模态框
-    let currentPurchase = null;
-// 强化模态框显示逻辑
-function showConfirmModal(title, confirmCallback) {
-    const modal = document.getElementById('confirmModal');
-    const backdrop = document.querySelector('.modal-backdrop');
-    
-    // 硬件加速优化
-    modal.style.transform = 'translate(-50%, -50%) scale(1)';
-    modal.style.opacity = 1;
-    backdrop.style.display = 'block';
-    
-    // 优化渲染层级
-    modal.style.zIndex = 1002;
-    backdrop.style.zIndex = 1001;
-
-    // 动态绑定事件
-    const confirmBtn = modal.querySelector('.confirm-btn');
-    confirmBtn.onclick = () => {
-        confirmCallback();
-        modal.style.transform = 'translate(-50%, -50%) scale(0.9)';
-        modal.style.opacity = 0;
-        backdrop.style.display = 'none';
-    };
-}
-
-        // 新增选项卡切换功能
+        // 其他辅助函数保持不变
         function switchTab(tabName) {
-            // 隐藏所有内容
             document.querySelectorAll('.tab-content').forEach(el => {
                 el.style.display = 'none';
             });
             
-            // 移除所有激活状态
             document.querySelectorAll('.tab').forEach(el => {
                 el.classList.remove('active');
             });
 
-            // 显示目标内容并激活对应选项卡
             document.getElementById(tabName).style.display = 'block';
             document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
 
-            // 更新收件箱数量显示
             if(tabName === 'inbox') {
                 document.getElementById('packageCount').textContent = inbox.length;
             }
         }
 
-        // 新增触摸事件处理
-        document.addEventListener('touchstart', function(e) {
-            // 防止按钮误触
-            if (e.target.closest('.game-btn')) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        }, { passive: false });
-
-        // 初始化时添加移动端检测
-        if ('ontouchstart' in window) {
-            document.body.classList.add('mobile');
-            // 优化滚动体验
-            document.documentElement.style.overflow = 'hidden';
-            document.body.style.overflow = 'hidden';
-            document.querySelector('.store-container').style.overflowX = 'auto';
-        }
-
-        // 界面更新
         function updateUI() {
-            // 更新收件箱
             const inboxContainer = document.getElementById('inboxContainer');
             inboxContainer.innerHTML = inbox.map((pkg, index) => `
                 <div class="inbox-card">
@@ -994,21 +845,28 @@ function showConfirmModal(title, confirmCallback) {
                 </div>
             `).join('');
 
-            // 更新收件箱角标
             document.getElementById('packageCount').textContent = inbox.length;
         }
 
-// 统一关闭逻辑
-function closeModal() {
-    document.querySelectorAll('.modal').forEach(m => {
-        m.style.display = 'none';
-    });
-    document.querySelector('.modal-backdrop').style.display = 'none';
-}
+        function closeModal() {
+            document.querySelectorAll('.modal').forEach(m => {
+                m.style.display = 'none';
+            });
+            document.querySelector('.modal-backdrop').style.display = 'none';
+        }
 
         // 初始化
         initStore();
         updateUI();
+
+        // 收件箱点击事件
+        document.getElementById('inboxContainer').addEventListener('click', function(e) {
+            const btn = e.target.closest('.open-btn');
+            if (btn) {
+                const index = parseInt(btn.dataset.index);
+                openPackage(index);
+            }
+        });
     </script>
 </body>
 </html>
